@@ -42,7 +42,7 @@ module Spree
       # TODO find a way to send the payment method id to Adyen servers and get
       # it back here to make sure we find the right payment method
       def payment_method
-        @payment_method ||= Gateway::AdyenPayment.last # find(params[:merchantReturnData])
+        @payment_method ||= Gateway::AdyenHPP.last # find(params[:merchantReturnData])
       end
 
       def authorized?

@@ -1,28 +1,6 @@
 module Spree
   class Gateway::AdyenPayment < Gateway
-    preference :api_username, :string
-    preference :api_password, :string
-    preference :merchant_account, :string
-
-    preference :adyen_hpps, :boolean, default: false
-    preference :skin_code, :string
-    preference :shared_secret, :string
-
-    def provider_class
-      ::Adyen::API
-    end
-
-    def source_required?
-      !preferred_adyen_hpps.present?
-    end
-
-    def provider
-      ::Adyen.configuration.api_username = preferred_api_username
-      ::Adyen.configuration.api_password = preferred_api_password
-      ::Adyen.configuration.default_api_params[:merchant_account] = preferred_merchant_account
-
-      provider_class
-    end
+    include AdyenCommon
 
     def auto_capture?
       false
@@ -55,22 +33,6 @@ module Spree
       def response.authorization; end
 
       response
-    end
-
-    def method_type
-      preferred_adyen_hpps ? "adyen" : super
-    end
-
-    # Spree usually grabs these from a Credit Card object but some users
-    # may use Adyen Hosted Payment Pages instead where we wouldn't keep
-    # the credit card object for the payment
-    def actions
-      %w{capture}
-    end
-
-    # Indicates whether its possible to capture the payment
-    def can_capture?(payment)
-      payment.pending? || payment.checkout?
     end
   end
 end
