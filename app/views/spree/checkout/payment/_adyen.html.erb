@@ -1,0 +1,18 @@
+<p>
+  You'll be redirected to Adyen Hosted Payment Pages. After completing the
+  payment form you'll be back to the store.
+</p>
+
+<%= link_to "Pay with Adyen", ::Adyen::Form.redirect_url(
+        :currency_code => Spree::Config.currency,
+        # :merchantReturnData => payment_method.id,
+        :ship_before_date => Date.tomorrow,
+        :session_validity => 10.minutes.from_now,
+        :recurring => false,
+        :merchant_reference => "#{@order.number}",
+        :merchant_account => payment_method.preferred_merchant_account,
+        :skin_code => payment_method.preferred_skin_code,
+        :shared_secret => payment_method.preferred_shared_secret,
+        :payment_amount => (@order.total.to_f * 100).to_int
+      )
+%>
