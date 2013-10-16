@@ -15,13 +15,13 @@ module Spree
         { :reference => gateway_options[:email],
           :email => gateway_options[:email],
           :ip => gateway_options[:ip],
-          :statement => 'invoice number 123456' },
+          :statement => "Order # #{gateway_options[:order_id]}" },
 
         { :holder_name => "#{source.first_name} #{source.last_name}",
-          :number => '4111111111111111',
-          :cvc => '737',
-          :expiry_month => "06",
-          :expiry_year => "2016" }
+          :number => source.number,
+          :cvc => source.verification_value,
+          :expiry_month => source.month,
+          :expiry_year => source.year }
       )
     end
 
