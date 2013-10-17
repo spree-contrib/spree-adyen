@@ -19,7 +19,7 @@ module Spree
       # Enable HTTP basic authentication
       def authenticate
         authenticate_or_request_with_http_basic do |username, password|
-          username == ENV['ADYEN_NOTIFY_USER'] && password == ['ADYEN_NOTIFY_PASSWD']
+          username == ENV['ADYEN_NOTIFY_USER'] && password == ENV['ADYEN_NOTIFY_PASSWD']
         end
       end
   end
