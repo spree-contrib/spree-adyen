@@ -68,4 +68,9 @@ class AdyenNotification < ActiveRecord::Base
   end
 
   alias_method :successful_authorization?, :successful_authorisation?
+
+  def handle!
+    # handle the payment, confirm it's been accepted / authorized and if
+    # not invalidate it
+  end
 end
