@@ -16,3 +16,17 @@
         :payment_amount => (@order.total.to_f * 100).to_int
       )
 %>
+
+<script type="text/javascript">
+$(function() {
+  var spreePaymentRadio = $("#checkout_form_payment input:radio")
+
+  spreePaymentRadio.change(function() {
+    if ($("#checkout_form_payment input:radio:checked").val() == <%= payment_method.id %>) {
+      $("#checkout_form_payment .form-buttons").hide();
+    } else {
+      $("#checkout_form_payment .form-buttons").show();
+    }
+  });
+});
+</script>
