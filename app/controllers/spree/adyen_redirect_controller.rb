@@ -22,9 +22,6 @@ module Spree
       order.next
 
       if order.complete?
-        # otherwise payment would remain in checkout state
-        payment.pend!
-
         flash.notice = Spree.t(:order_processed_successfully)
         redirect_to order_path(order, :token => order.token)
       else
