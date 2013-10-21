@@ -3,7 +3,7 @@
   payment form you'll be back to the store.
 </p>
 
-<%= link_to "Pay with Adyen", ::Adyen::Form.redirect_url(
+<% redirect_params = {
         :currency_code => Spree::Config.currency,
         # :merchantReturnData => payment_method.id,
         :ship_before_date => Date.tomorrow,
@@ -14,7 +14,12 @@
         :skin_code => payment_method.preferred_skin_code,
         :shared_secret => payment_method.preferred_shared_secret,
         :payment_amount => (@order.total.to_f * 100).to_int
-      )
+  }
+%>
+
+<%= link_to "Pay with Adyen", ::Adyen::Form.redirect_url(
+      Rails.env.development? ? redirect_params.merge(:resURL => adyen_confirmation_url) : redirect_params
+  )
 %>
 
 <script type="text/javascript">
