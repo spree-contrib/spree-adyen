@@ -37,15 +37,5 @@ module Spree
         
       response
     end
-
-    def capture(amount, response_code, gateway_options = {})
-      value = { :currency => Config.currency, :value => amount }
-      response = provider.capture_payment(response_code, value)
-
-      # spree/payment/processing calls this method
-      def response.authorization; end
-
-      response
-    end
   end
 end
