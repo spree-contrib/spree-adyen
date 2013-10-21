@@ -24,11 +24,26 @@ module Spree
       response
     end
 
+    # According to Spree Processing class API the response object should respond
+    # to an authorization method which result would be assigned to payment
+    # response code
+    def void(response_code, gateway_options = {})
+      response = provider.cancel_payment(response_code)
+
+      response.class.send(:define_method, :authorization, -> { response_code })
+      response
+    end
+
     # Spree usually grabs these from a Credit Card object but when using
     # Adyen Hosted Payment Pages where we wouldn't keep # the credit card object
     # as that entered outside of the store forms
     def actions
-      %w{capture}
+      %w{capture void}
+    end
+
+    # Indicates whether its possible to void the payment.
+    def can_void?(payment)
+      !payment.void?
     end
 
     # Indicates whether its possible to capture the payment
