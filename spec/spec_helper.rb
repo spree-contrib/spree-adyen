@@ -10,6 +10,7 @@ require 'ffaker'
 Dir[File.join(File.dirname(__FILE__), "support/**/*.rb")].each {|f| require f }
 
 require 'spree/testing_support/factories'
+require 'spree/testing_support/controller_requests'
 
 RSpec.configure do |config|
   config.color = true
@@ -17,5 +18,6 @@ RSpec.configure do |config|
 
   config.use_transactional_fixtures = true
 
+  config.include Spree::TestingSupport::ControllerRequests
   config.include FactoryGirl::Syntax::Methods
 end
