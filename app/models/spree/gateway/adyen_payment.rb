@@ -26,9 +26,9 @@ module Spree
 
       # Needed to make the response object talk nicely with Spree payment/processing api
       if response.success?
-        response.class.send(:define_method, :authorization, -> { response.psp_reference })
-        response.class.send(:define_method, :avs_result, -> { {} })
-        response.class.send(:define_method, :cvv_result, -> { { 'code' => response.result_code } })
+        def response.authorization; psp_reference; end
+        def response.avs_result; {}; end
+        def response.cvv_result; { 'code' => result_code }; end
       else
         def response.to_s
           "#{result_code} - #{refusal_reason}"

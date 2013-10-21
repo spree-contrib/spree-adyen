@@ -24,9 +24,9 @@ module Spree
         response = provider.capture_payment(response_code, value)
 
         if response.success?
-          response.class.send(:define_method, :authorization, -> { response.psp_reference })
-          response.class.send(:define_method, :avs_result, -> { {} })
-          response.class.send(:define_method, :cvv_result, -> {})
+          def response.authorization; psp_reference; end
+          def response.avs_result; {}; end
+          def response.cvv_result; {}; end
         else
           # TODO confirm the error response will always have these two methods
           def response.to_s
@@ -44,7 +44,7 @@ module Spree
         response = provider.cancel_payment(response_code)
 
         if response.success?
-          response.class.send(:define_method, :authorization, -> { response.psp_reference })
+          def response.authorization; psp_reference; end
         else
           # TODO confirm the error response will always have these two methods
           def response.to_s

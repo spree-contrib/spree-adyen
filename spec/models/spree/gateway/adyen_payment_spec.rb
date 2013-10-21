@@ -13,6 +13,7 @@ module Spree
 
       it "adds processing api calls to response object" do
         result = subject.authorize(30000, create(:credit_card))
+
         expect(result.authorization).to eq response.psp_reference
         expect(result.cvv_result['code']).to eq response.result_code
       end
