@@ -26,12 +26,18 @@
 $(function() {
   var spreePaymentRadio = $("#checkout_form_payment input:radio")
 
-  spreePaymentRadio.change(function() {
+  var hideCheckoutButtonForAdyen = function() {
     if ($("#checkout_form_payment input:radio:checked").val() == <%= payment_method.id %>) {
       $("#checkout_form_payment .form-buttons").hide();
     } else {
       $("#checkout_form_payment .form-buttons").show();
     }
+  }
+
+  spreePaymentRadio.change(function() {
+    hideCheckoutButtonForAdyen();
   });
+
+  hideCheckoutButtonForAdyen();
 });
 </script>
