@@ -34,5 +34,9 @@ module Spree
     def method_type
       "adyen"
     end
+
+    def payment_profiles_supported?
+      true
+    end
   end
 end
