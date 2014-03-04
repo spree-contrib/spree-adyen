@@ -2,11 +2,11 @@ require 'spec_helper'
 
 module Spree
   describe Gateway::AdyenPayment do
-    context "successfully authorized" do
-      let(:response) do
-        double("Response", psp_reference: "psp", result_code: "accepted", success?: true)
-      end
+    let(:response) do
+      double("Response", psp_reference: "psp", result_code: "accepted", success?: true)
+    end
 
+    context "successfully authorized" do
       before do
         subject.stub_chain(:provider, authorise_payment: response)
       end
@@ -16,6 +16,30 @@ module Spree
 
         expect(result.authorization).to eq response.psp_reference
         expect(result.cvv_result['code']).to eq response.result_code
+      end
+    end
+
+    context "ensure adyen validations goes fine" do
+      let(:options) do
+        { :order_id => 17,
+          :email => "surf@uk.com",
+          :ip => "127.0.0.1" }
+      end
+
+      before do
+        subject.preferred_merchant_account = "merchant"
+        subject.preferred_api_username = "admin"
+        subject.preferred_api_password = "123"
+
+        # Watch out as we're stubbing private method here to avoid reaching network
+        # we might need to stub another method in future adyen gem versions
+        ::Adyen::API::PaymentService.any_instance.stub(make_payment_request: response)
+      end
+
+      it "adds processing api calls to response object" do
+        expect {
+          subject.authorize(30000, create(:credit_card), options)
+        }.not_to raise_error
       end
     end
 
