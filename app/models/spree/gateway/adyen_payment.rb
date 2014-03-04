@@ -17,7 +17,7 @@ module Spree
             :ip => gateway_options[:ip],
             :statement => "Order # #{gateway_options[:order_id]}" },
 
-          { :holder_name => "#{source.first_name} #{source.last_name}",
+          { :holder_name => source.name,
             :number => source.number,
             :cvc => source.verification_value,
             :expiry_month => source.month,
