@@ -37,9 +37,5 @@ module Spree
         
       response
     end
-
-    def payment_profiles_supported?
-      true
-    end
   end
 end
