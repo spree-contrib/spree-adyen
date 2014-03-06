@@ -19,7 +19,7 @@ module Spree
             :ip => gateway_options[:ip],
             :statement => "Order # #{gateway_options[:order_id]}" },
 
-          { encrypted: { json: source.verification_value } }
+          { encrypted: { json: source.encrypted_data } }
       )
 
       # Needed to make the response object talk nicely with Spree payment/processing api
@@ -37,8 +37,8 @@ module Spree
     end
 
     def payment_source_class
-        Spree::EncryptedCreditCard
-      end
+      EncryptedCreditCard
+    end
 
     def method_type
       'adyen_encrypted'
