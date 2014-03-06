@@ -1,12 +1,12 @@
 module Spree
+  PermittedAttributes.source_attributes.push :encrypted_data
+
   class EncryptedCreditCard < ActiveRecord::Base
     has_many :payments, as: :source
 
-    attr_accessor :verification_value
+    attr_accessor :encrypted_data, :verification_value
 
-    validates :month, :year, numericality: { only_integer: true }
-    validates :name, presence: true
-    validates :verification_value, presence: true
+    validates :encrypted_data, presence: true
     validate :expiry_not_in_the_past
 
     def expiry=(expiry)

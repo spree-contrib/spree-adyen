@@ -1,6 +1,5 @@
 <div id="adyen-encrypted-form">
   <%= image_tag 'credit_cards/credit_card.gif', :id => 'credit-card-image' %>
-  <% param_prefix = "payment_source[#{payment_method.id}]" %>
 
   <p class="field">
     <label for="adyen-encrypted-form-holder-name"><%= Spree.t(:name_on_card) %></label><span class="required">*</span><br />
@@ -39,9 +38,8 @@
     var form = document.getElementById('checkout_form_payment');    
     var key = "<%= payment_method.options[:public_key] %>";
     var options = {
-      'name': "<%= "#{param_prefix}[verification_value]" %>"
+      'name': "<%= "payment_source[#{payment_method.id}][encrypted_data]" %>"
     }; 
-    
     // the form will be encrypted before it is submitted
     adyen.encrypt.createEncryptedForm(form, key, options);
 </script>
