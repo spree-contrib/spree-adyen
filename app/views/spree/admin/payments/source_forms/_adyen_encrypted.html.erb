@@ -4,13 +4,11 @@
       <% previous_cards.each do |card| %>
         <label><%= radio_button_tag :card, card.id, card == previous_cards.first %> <%= card.display_number %><br /></label>
       <% end %>
-      <label><%= radio_button_tag :card, 'new', false, { class: "card_new" } %> <%= Spree.t(:use_new_cc) %></label>
+      <label><%= radio_button_tag :card, 'new', false, { id: "card_new#{payment_method.id}" } %> <%= Spree.t(:use_new_cc) %></label>
     <% end %>
   </div>
 
-  <div class="card_form" id="adyen-encrypted-form">
-    <%= image_tag 'credit_cards/credit_card.gif', :class => 'credit-card-image' %>
-
+  <div id="card_form<%= payment_method.id %>">
     <p class="field">
       <label for="adyen-encrypted-form-holder-name"><%= Spree.t(:name_on_card) %></label><span class="required">*</span><br />
       <input type="text" size="20" value="<%= "#{@order.billing_firstname} #{@order.billing_lastname}" %>" autocomplete="off" data-encrypted-name="holderName" />
@@ -40,6 +38,8 @@
     </p>
 
     <input type="hidden" id="adyen-encrypted-form-expiry-generationtime" value="<%= DateTime.current() %>" data-encrypted-name="generationtime" />
+
+    <%= image_tag 'credit_cards/credit_card.gif', :class => 'credit-card-image' %>
   </div>
 </fieldset>
 
