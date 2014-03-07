@@ -23,6 +23,7 @@ module Spree
       let(:options) do
         { :order_id => 17,
           :email => "surf@uk.com",
+          :customer_id => 1,
           :ip => "127.0.0.1" }
       end
 
@@ -37,8 +38,14 @@ module Spree
       end
 
       it "adds processing api calls to response object" do
+        cc = create(:credit_card)
         expect {
-          subject.authorize(30000, create(:credit_card), options)
+          subject.authorize(30000, cc, options)
+        }.not_to raise_error
+
+        cc.gateway_customer_profile_id = "123"
+        expect {
+          subject.authorize(30000, cc, options)
         }.not_to raise_error
       end
     end
@@ -56,6 +63,19 @@ module Spree
         result = subject.authorize(30000, create(:credit_card))
         expect(result.to_s).to include(response.result_code)
         expect(result.to_s).to include(response.refusal_reason)
+      end
+    end
+
+    context "profile creation" do
+      let(:payment) { create(:payment) }
+
+      before do
+        subject.stub_chain(:provider, authorise_payment: response)
+      end
+
+      it "authorizes payment to set up recurring transactions" do
+        payment.source.gateway_customer_profile_id = nil
+        subject.create_profile payment
       end
     end
   end
