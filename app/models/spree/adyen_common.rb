@@ -40,7 +40,7 @@ module Spree
       # According to Spree Processing class API the response object should respond
       # to an authorization method which return value should be assigned to payment
       # response_code
-      def void(response_code, gateway_options = {})
+      def void(response_code, source, gateway_options = {})
         response = provider.cancel_payment(response_code)
 
         if response.success?
