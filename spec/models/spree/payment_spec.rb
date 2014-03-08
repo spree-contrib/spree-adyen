@@ -5,12 +5,20 @@ module Spree
     shared_examples "creates profile on payment creation" do
       let(:order) { create(:order) }
 
+      let(:details_response) do
+        double("List", details: [
+          { card: { expiry_date: Time.now, number: "1111" },
+            recurring_detail_reference: "123432423" }
+        ])
+      end
+
       let(:response) do
         double("Response", psp_reference: "psp", result_code: "accepted", success?: true)
       end
 
       before do
         payment_method.stub_chain(:provider, authorise_payment: response)
+        payment_method.stub_chain(:provider, list_recurring_details: details_response)
       end
 
       specify do
