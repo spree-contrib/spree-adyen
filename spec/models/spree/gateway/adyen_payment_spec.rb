@@ -69,14 +69,24 @@ module Spree
     context "profile creation" do
       let(:payment) { create(:payment) }
 
+      let(:details_response) do
+        double("List", details: [
+          { card: { expiry_date: Time.now, number: "1111" },
+            recurring_detail_reference: "123432423" }
+        ])
+      end
+
       before do
         subject.stub_chain(:provider, authorise_payment: response)
+        subject.stub_chain(:provider, list_recurring_details: details_response)
       end
 
       it "authorizes payment to set up recurring transactions" do
         payment.source.gateway_customer_profile_id = nil
         subject.create_profile payment
+        expect(payment.source.gateway_customer_profile_id).to eq details_response.details.last[:recurring_detail_reference]
       end
     end
+
   end
 end

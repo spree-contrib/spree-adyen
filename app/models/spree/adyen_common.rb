@@ -100,16 +100,21 @@ module Spree
             response = provider.authorise_payment payment.order.number, amount, shopper, card, true
 
             if response.success?
-              # NOTE Just to tell that this source have been set to use recurring payments
-              # It doesn't actually save the recurring_detail_reference (adyen api
-              # doesn't give it back on the authorization response). One possible way
-              # to do it here would be to get a list of recurring payments details via
-              # another api call and grab the reference matching the current payment here
-              payment.source.update_column(:gateway_customer_profile_id, response.psp_reference)
+              # Adyen doesn't give us the recurring reference (token) so we
+              # need to reach the api again to grab the token
+              list = provider.list_recurring_details(shopper[:reference])
+              payment.source.update_columns(
+                month: list.details.last[:card][:expiry_date].month,
+                year: list.details.last[:card][:expiry_date].year,
+                name: list.details.last[:card][:holder_name],
+                cc_type: list.details.last[:variant],
+                last_digits: list.details.last[:card][:number],
+                gateway_customer_profile_id: list.details.last[:recurring_detail_reference]
+              )
             else
               logger.error(Spree.t(:gateway_error))
               logger.error("  #{response.to_yaml}")
-              raise Core::GatewayError.new(response.fault_message)
+              raise Core::GatewayError.new(response.fault_message || response.refusal_reason)
             end
 
             response
