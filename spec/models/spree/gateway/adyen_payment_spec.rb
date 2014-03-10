@@ -88,5 +88,40 @@ module Spree
       end
     end
 
+    context "real external profile creation", external: true do
+      before do
+        subject.preferred_merchant_account = test_credentials["merchant_account"]
+        subject.preferred_api_username = test_credentials["api_username"]
+        subject.preferred_api_password = test_credentials["api_password"]
+      end
+
+      let(:credit_card) do
+        CreditCard.create! do |cc|
+          cc.name = "Washington Braga"
+          cc.number = "3700 0000 0000 002"
+          cc.month = "06"
+          cc.year = "2016"
+          cc.verification_value = "7373"
+        end
+      end
+
+      let(:order) do
+        user = stub_model(LegacyUser, email: "spree@example.com", id: 1)
+        stub_model(Order, id: 1, number: "R2342345435", last_ip_address: "127.0.0.1", user: user)
+      end
+
+      it "sets last recurring detail reference returned on payment source" do
+        subject.save
+
+        payment = Payment.create! do |p|
+          p.order = order
+          p.amount = 1
+          p.source = credit_card
+          p.payment_method = subject
+        end
+
+        expect(payment.source.gateway_customer_profile_id).to be_present
+      end
+    end
   end
 end
