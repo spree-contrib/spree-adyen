@@ -81,9 +81,7 @@ module Spree
                       :statement => "Order # #{gateway_options[:order_id]}" }
 
           if source.gateway_customer_profile_id.present?
-            # NOTE uses the LATEST customer credit card stored, the profile_id here
-            # is not actually the recurring_detail_reference
-            response = provider.authorise_recurring_payment reference, amount, shopper
+            response = provider.authorise_recurring_payment reference, amount, shopper, source.gateway_customer_profile_id
           else
             response = provider.authorise_payment reference, amount, shopper, card
           end
