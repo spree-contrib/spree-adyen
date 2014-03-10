@@ -67,6 +67,18 @@ module Spree
         payment_method.stub_chain(:provider, cancel_payment: response)
         expect(payment.void_transaction!).to be
       end
+
+      it "refund payments" do
+        payment = Payment.create! do |p|
+          p.order_id = order.id
+          p.amount = order.total
+          p.source = credit_card
+          p.payment_method = payment_method
+        end
+
+        payment_method.stub_chain(:provider, refund_payment: response)
+        expect(payment.credit!).to be_a Spree::Payment
+      end
     end
 
     context "Adyen Payment Encrypted" do

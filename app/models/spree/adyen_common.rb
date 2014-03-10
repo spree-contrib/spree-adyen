@@ -54,6 +54,22 @@ module Spree
         response
       end
 
+      def credit(credit_cents, source, response_code, gateway_options)
+        amount = { :currency => Config.currency, :value => credit_cents }
+        response = provider.refund_payment response_code, amount
+
+        if response.success?
+          def response.authorization; psp_reference; end
+        else
+          # TODO confirm the error response will always have these two methods
+          def response.to_s
+            "#{result_code} - #{refusal_reason}"
+          end
+        end
+
+        response
+      end
+
       private
         def authorize_on_card(amount, source, gateway_options, card)
           reference = gateway_options[:order_id]
