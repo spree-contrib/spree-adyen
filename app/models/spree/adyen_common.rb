@@ -70,6 +70,18 @@ module Spree
         response
       end
 
+      def disable_recurring_contract(source)
+        response = provider.disable_recurring_contract source.user_id, source.gateway_customer_profile_id
+
+        if response.success?
+          source.update_column :gateway_customer_profile_id, nil
+        else
+          logger.error(Spree.t(:gateway_error))
+          logger.error("  #{response.to_yaml}")
+          raise Core::GatewayError.new(response.fault_message || response.refusal_reason)
+        end
+      end
+
       private
         def authorize_on_card(amount, source, gateway_options, card)
           reference = gateway_options[:order_id]
