@@ -10,6 +10,12 @@ module Spree
         app.config.spree.payment_methods << Gateway::AdyenHPP
         app.config.spree.payment_methods << Gateway::AdyenPaymentEncrypted
       end
+
+      initializer "spree-adyen.assets.precompile", :group => :all do |app|
+        app.config.assets.precompile += %w[
+          adyen.encrypt.js
+        ]
+      end
     end
   end
 end
