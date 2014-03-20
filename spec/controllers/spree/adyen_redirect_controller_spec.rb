@@ -31,7 +31,7 @@ module Spree
       spree_get :confirm, params
       payment = Payment.last
 
-      expect(payment.amount).to eq order.total
+      expect(payment.amount.to_f).to eq order.total.to_f
       expect(payment.payment_method).to eq payment_method
       expect(payment.response_code).to eq params['pspReference']
     end
