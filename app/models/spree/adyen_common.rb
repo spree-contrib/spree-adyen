@@ -87,7 +87,14 @@ module Spree
           reference = gateway_options[:order_id]
 
           amount = { :currency => Config.currency, :value => amount }
-          shopper = { :reference => gateway_options[:customer_id],
+
+          shopper_reference = if gateway_options[:customer_id].present?
+                                gateway_options[:customer_id]
+                              else
+                                gateway_options[:email]
+                              end
+
+          shopper = { :reference => shopper_reference,
                       :email => gateway_options[:email],
                       :ip => gateway_options[:ip],
                       :statement => "Order # #{gateway_options[:order_id]}" }

@@ -37,13 +37,23 @@ module Spree
         ::Adyen::API::PaymentService.any_instance.stub(make_payment_request: response)
       end
 
+      let(:cc) { create(:credit_card) }
+
       it "adds processing api calls to response object" do
-        cc = create(:credit_card)
         expect {
           subject.authorize(30000, cc, options)
         }.not_to raise_error
 
         cc.gateway_customer_profile_id = "123"
+        expect {
+          subject.authorize(30000, cc, options)
+        }.not_to raise_error
+      end
+
+      it "user order email as shopper reference when theres no user" do
+        cc.gateway_customer_profile_id = "123"
+        options[:customer_id] = nil
+
         expect {
           subject.authorize(30000, cc, options)
         }.not_to raise_error
@@ -143,7 +153,6 @@ module Spree
           expect(payment.source.gateway_customer_profile_id).to be_present
         end
       end
-
     end
   end
 end
