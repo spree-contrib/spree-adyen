@@ -115,11 +115,10 @@ module Spree
         def create_profile_on_card(payment, card)
           unless payment.source.gateway_customer_profile_id.present?
 
-            shopper = { :reference => payment.order.user.id,
-                        :email => payment.order.user.email,
+            shopper = { :reference => (payment.order.user_id.present? ? payment.order.user_id : payment.order.email),
+                        :email => payment.order.email,
                         :ip => payment.order.last_ip_address,
                         :statement => "Order # #{payment.order.number}" }
-
 
             amount = { :currency => Config.currency, :value => 100 }
 
