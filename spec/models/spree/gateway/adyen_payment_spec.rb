@@ -105,23 +105,45 @@ module Spree
         end
       end
 
-      let(:order) do
-        user = stub_model(LegacyUser, email: "spree@example.com", id: 1)
-        stub_model(Order, id: 1, number: "R2342345435", last_ip_address: "127.0.0.1", user: user)
-      end
-
-      it "sets last recurring detail reference returned on payment source" do
-        subject.save
-
-        payment = Payment.create! do |p|
-          p.order = order
-          p.amount = 1
-          p.source = credit_card
-          p.payment_method = subject
+      context 'with an associated user' do
+        let(:order) do
+          user = stub_model(LegacyUser, email: "spree@example.com", id: 1)
+          stub_model(Order, id: 1, number: "R2342345435", last_ip_address: "127.0.0.1", user: user)
         end
 
-        expect(payment.source.gateway_customer_profile_id).to be_present
+        it "sets last recurring detail reference returned on payment source" do
+          subject.save
+
+          payment = Payment.create! do |p|
+            p.order = order
+            p.amount = 1
+            p.source = credit_card
+            p.payment_method = subject
+          end
+
+          expect(payment.source.gateway_customer_profile_id).to be_present
+        end
       end
+
+      context 'without an associated user' do
+        let(:order) do
+          stub_model(Order, id: 1, number: "R2342345435", last_ip_address: "127.0.0.1")
+        end
+
+        it "sets last recurring detail reference returned on payment source" do
+          subject.save
+
+          payment = Payment.create! do |p|
+            p.order = order
+            p.amount = 1
+            p.source = credit_card
+            p.payment_method = subject
+          end
+
+          expect(payment.source.gateway_customer_profile_id).to be_present
+        end
+      end
+
     end
   end
 end
