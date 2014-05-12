@@ -1,8 +1,8 @@
 # Spree Adyen Integration
 
 Easily integrates Adyen payments into a Spree store. It works as a wrapper
-of the awesome adyen gem which contains all basic API calls for Adyen payment
-services.
+of the [awesome adyen](https://github.com/wvanbergen/adyen/) gem which contains
+all basic API calls for Adyen payment services.
 
 ## Installation
 
