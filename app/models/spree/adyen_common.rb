@@ -129,7 +129,18 @@ module Spree
 
             amount = { :currency => Config.currency, :value => 100 }
 
-            response = provider.authorise_payment payment.order.number, amount, shopper, card, true
+            options = if payment.respond_to?(:request_env) && payment.request_env.is_a?(Hash)
+                        {
+                          browser_info: {
+                            accept_header: payment.request_env['HTTP_ACCEPT'],
+                            user_agent: payment.request_env['HTTP_USER_AGENT']
+                          }
+                        }
+                      else
+                        {}
+                      end
+
+            response = provider.authorise_payment payment.order.number, amount, shopper, card, options
 
             if response.success?
               # Adyen doesn't give us the recurring reference (token) so we
