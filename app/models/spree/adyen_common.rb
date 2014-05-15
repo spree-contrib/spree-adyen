@@ -134,7 +134,8 @@ module Spree
                           browser_info: {
                             accept_header: payment.request_env['HTTP_ACCEPT'],
                             user_agent: payment.request_env['HTTP_USER_AGENT']
-                          }
+                          },
+                          recurring: true
                         }
                       else
                         {}
@@ -154,6 +155,8 @@ module Spree
                 last_digits: list.details.last[:card][:number],
                 gateway_customer_profile_id: list.details.last[:recurring_detail_reference]
               )
+            elsif response.enrolled_3d?
+              raise Adyen::Enrolled3DError.new(response)
             else
               logger.error(Spree.t(:gateway_error))
               logger.error("  #{response.to_yaml}")
