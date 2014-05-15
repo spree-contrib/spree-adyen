@@ -21,3 +21,5 @@ config/initializers/secret_token.rb
 Gemfile.lock
 spec/dummy
 config/credentials.yml
+
+spec/cassettes
