@@ -82,6 +82,17 @@ module Spree
         end
       end
 
+      def authorise3d(md, pa_response, ip, env)
+        browser_info = {
+          browser_info: {
+            accept_header: env['HTTP_ACCEPT'],
+            user_agent: env['HTTP_USER_AGENT']
+          }
+        }
+
+        provider.authorise3d_payment(md, pa_response, ip, browser_info)
+      end
+
       private
         def authorize_on_card(amount, source, gateway_options, card)
           reference = gateway_options[:order_id]

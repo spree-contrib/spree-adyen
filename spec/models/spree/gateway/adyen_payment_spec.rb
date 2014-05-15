@@ -191,6 +191,16 @@ module Spree
             expect(payments).to eq Payment.count
           end
         end
+
+        it "authorises with payment 3d request" do
+          md = test_credentials["md"]
+          pa_response = test_credentials["pa_response"]
+          ip = "127.0.0.1"
+
+          VCR.use_cassette("3D-Secure-authorise") do
+            expect(subject.authorise3d(md, pa_response, ip, env)).to be_success
+          end
+        end
       end
     end
   end
