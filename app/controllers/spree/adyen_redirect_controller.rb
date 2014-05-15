@@ -29,6 +29,38 @@ module Spree
       end
     end
 
+    def adyen_authorise3d
+      order = current_order
+
+      if params[:md].present? && params[:pa_res]
+        md = params[:md]
+        pa_response = params[:pa_res]
+
+        # TODO How to map this to make sure we fetch the right gateway?
+        gateway = Gateway::AdyenPaymentEncrypted.last
+
+        if response = gateway.authorise3d(md, pa_response, request.ip, request.headers.env)
+          payment = order.payments.create!(
+            :amount => order.total,
+            :payment_method => gateway,
+            :response_code => response.psp_reference
+          )
+
+          order.next
+
+          if order.complete?
+            flash.notice = Spree.t(:order_processed_successfully)
+            redirect_to order_path(order, :token => order.token)
+          else
+            redirect_to checkout_state_path(order.state)
+          end
+        else
+          flash.notice = response.error.inspect
+          redirect_to checkout_state_path(order.state)
+        end
+      end
+    end
+
     private
       def check_signature
         unless ::Adyen::Form.redirect_signature_check(params, payment_method.preferred_shared_secret)
