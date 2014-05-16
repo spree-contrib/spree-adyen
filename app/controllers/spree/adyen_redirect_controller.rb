@@ -70,7 +70,10 @@ module Spree
             flash.notice = Spree.t(:order_processed_successfully)
             redirect_to order_path(order, :token => order.token)
           else
-            flash.notice = order.errors.inspect
+            if order.errors.any?
+              flash.notice = order.errors.full_messages.inspect
+            end
+
             redirect_to checkout_state_path(order.state)
           end
         else
