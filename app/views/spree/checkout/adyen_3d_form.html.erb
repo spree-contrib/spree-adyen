@@ -4,9 +4,8 @@
     <div class="columns thirteen omega"><%= checkout_progress %></div>
   </div>
 
-  <div class="row" data-hook="checkout_content">
-    <div class="columns alpha omega sixteen">
-
+  <div class="row">
+    <div class="columns alpha twelve">
       <form method="POST" action="<%= @adyen_3d_response.issuer_url %>" id="3dform">
         <input type="hidden" name="PaReq" value="<%= @adyen_3d_response.pa_request %>" />
         <input type="hidden" name="TermUrl" value="<%= adyen_authorise3d_url %>" />
