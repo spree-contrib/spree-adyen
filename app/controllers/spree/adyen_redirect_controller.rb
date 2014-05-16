@@ -38,15 +38,16 @@ module Spree
         md = params[:MD]
         pa_response = params[:PaRes]
 
-        # TODO Use something like session[:adyen_authorise3d_gateway_id] to fetch
-        # the proper gateway
-        gateway = Gateway::AdyenPaymentEncrypted.last
+        gateway_class = session[:adyen_gateway_name].constantize
+        gateway = gateway_class.find(session[:adyen_gateway_id])
 
-        if response = gateway.authorise3d(md, pa_response, request.ip, request.headers.env)
+        response3d = gateway.authorise3d(md, pa_response, request.ip, request.headers.env)
+
+        if response3d.success?
           payment = order.payments.create!(
             :amount => order.total,
             :payment_method => gateway,
-            :response_code => response.psp_reference
+            :response_code => response3d.psp_reference
           )
 
           credit_card = CreditCard.create! do |cc|
@@ -69,10 +70,11 @@ module Spree
             flash.notice = Spree.t(:order_processed_successfully)
             redirect_to order_path(order, :token => order.token)
           else
+            flash.notice = order.errors.inspect
             redirect_to checkout_state_path(order.state)
           end
         else
-          flash.notice = response.error.inspect
+          flash.notice = response3d.error.inspect
           redirect_to checkout_state_path(order.state)
         end
       else

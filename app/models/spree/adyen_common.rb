@@ -167,7 +167,7 @@ module Spree
                 gateway_customer_profile_id: list.details.last[:recurring_detail_reference]
               )
             elsif response.enrolled_3d?
-              raise Adyen::Enrolled3DError.new(response)
+              raise Adyen::Enrolled3DError.new(response, payment.payment_method)
             else
               logger.error(Spree.t(:gateway_error))
               logger.error("  #{response.to_yaml}")
