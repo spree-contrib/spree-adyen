@@ -50,15 +50,20 @@ module Spree
             :response_code => response3d.psp_reference
           )
 
-          credit_card = CreditCard.create! do |cc|
-            list = gateway.provider.list_recurring_details(order.user_id.present? ? order.user_id : order.email)
+          list = gateway.provider.list_recurring_details(order.user_id.present? ? order.user_id : order.email)
 
-            cc.month = list.details.last[:card][:expiry_date].month
-            cc.year = list.details.last[:card][:expiry_date].year
-            cc.name = list.details.last[:card][:holder_name]
-            cc.cc_type = list.details.last[:variant]
-            cc.last_digits = list.details.last[:card][:number]
-            cc.gateway_customer_profile_id = list.details.last[:recurring_detail_reference]
+          if list.details.empty?
+            flash.notice = "Could not find any recurring details"
+            redirect_to checkout_state_path(order.state) and return
+          else
+            credit_card = Spree::CreditCard.create! do |cc|
+              cc.month = list.details.last[:card][:expiry_date].month
+              cc.year = list.details.last[:card][:expiry_date].year
+              cc.name = list.details.last[:card][:holder_name]
+              cc.cc_type = list.details.last[:variant]
+              cc.last_digits = list.details.last[:card][:number]
+              cc.gateway_customer_profile_id = list.details.last[:recurring_detail_reference]
+            end
           end
 
           # We want to avoid callbacks such as Payment#create_payment_profile on after_save
