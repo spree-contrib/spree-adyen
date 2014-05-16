@@ -52,7 +52,7 @@ module Spree
 
           list = gateway.provider.list_recurring_details(order.user_id.present? ? order.user_id : order.email)
 
-          if list.details.empty?
+          if list.details && list.details.empty?
             flash.notice = "Could not find any recurring details"
             redirect_to checkout_state_path(order.state) and return
           else
