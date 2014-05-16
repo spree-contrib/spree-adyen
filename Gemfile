@@ -1,6 +1,9 @@
 source 'https://rubygems.org'
 
-gem 'spree_core', github: 'spree/spree', branch: 'master'
+gem 'spree', github: 'spree/spree'
+gem 'coffee-rails', '~> 4.0.0'
+gem 'sass-rails', '~> 4.0.0'
+
 gem 'adyen', github: 'huoxito/adyen', branch: '3D-Secure-support'
 gem 'pry-rails'
 
