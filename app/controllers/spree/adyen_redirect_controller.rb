@@ -34,9 +34,9 @@ module Spree
     def authorise3d
       order = current_order
 
-      if params[:md].present? && params[:pa_res].present?
-        md = params[:md]
-        pa_response = params[:pa_res]
+      if params[:MD].present? && params[:PaRes].present?
+        md = params[:MD]
+        pa_response = params[:PaRes]
 
         # TODO Use something like session[:adyen_authorise3d_gateway_id] to fetch
         # the proper gateway
@@ -75,6 +75,8 @@ module Spree
           flash.notice = response.error.inspect
           redirect_to checkout_state_path(order.state)
         end
+      else
+        redirect_to checkout_state_path(order.state)
       end
     end
 
