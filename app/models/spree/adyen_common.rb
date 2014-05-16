@@ -149,7 +149,7 @@ module Spree
                           recurring: true
                         }
                       else
-                        {}
+                        { recurring: true }
                       end
 
             response = provider.authorise_payment payment.order.number, amount, shopper, card, options
