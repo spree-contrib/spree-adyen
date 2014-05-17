@@ -2,46 +2,127 @@ require 'spec_helper'
 
 module Spree
   describe AdyenRedirectController do
-    def params
-      { "merchantReference"=>"R183301255",
-        "skinCode"=>"Nonenone",
-        "shopperLocale"=>"en_GB",
-        "paymentMethod"=>"visa",
-        "authResult"=>"AUTHORISED",
-        "pspReference"=>"8813824003752247",
-        "merchantSig"=>"erewrwerewrewrwer" }
-    end
-
     let(:order) { create(:order_with_line_items, state: "payment") } 
-    let(:payment_method) { Gateway::AdyenHPP.create(name: "Adyen") }
-    
-    before do
-      controller.stub(current_order: order)
-      controller.stub(:check_signature)
-      controller.stub(payment_method: payment_method)
-    end
 
-    it "create payment" do
-      expect {
+    context "Adyen HPP Gateway" do
+      def params
+        { "merchantReference"=>"R183301255",
+          "skinCode"=>"Nonenone",
+          "shopperLocale"=>"en_GB",
+          "paymentMethod"=>"visa",
+          "authResult"=>"AUTHORISED",
+          "pspReference"=>"8813824003752247",
+          "merchantSig"=>"erewrwerewrewrwer" }
+      end
+
+      let(:payment_method) { Gateway::AdyenHPP.create(name: "Adyen") }
+
+      before do
+        controller.stub(current_order: order)
+        controller.stub(:check_signature)
+        controller.stub(payment_method: payment_method)
+      end
+
+      it "create payment" do
+        expect {
+          spree_get :confirm, params
+        }.to change { Payment.count }.by(1)
+      end
+
+      it "sets payment attributes properly" do
         spree_get :confirm, params
-      }.to change { Payment.count }.by(1)
+        payment = Payment.last
+
+        expect(payment.amount.to_f).to eq order.total.to_f
+        expect(payment.payment_method).to eq payment_method
+        expect(payment.response_code).to eq params['pspReference']
+      end
+
+      it "redirects to order complete page" do
+        spree_get :confirm, params
+        expect(response).to redirect_to spree.order_path(order, :token => order.token)
+      end
+
+      pending "test check signature filter"
+      pending "grab payment method by parameter (possibly merchantReturnData passed via session payment params)"
     end
 
-    it "sets payment attributes properly" do
-      spree_get :confirm, params
-      payment = Payment.last
+    context "Adyen 3-D redirect" do
+      let(:env) do
+        {
+          "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:29.0) Gecko/20100101 Firefox/29.0",
+          "HTTP_ACCEPT"=> "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+        }
+      end
 
-      expect(payment.amount.to_f).to eq order.total.to_f
-      expect(payment.payment_method).to eq payment_method
-      expect(payment.response_code).to eq params['pspReference']
+      context "stubbing Adyen API" do
+        let(:params) do
+          { MD: "Sooo", PaRes: "Wat" }
+        end
+
+        let!(:gateway) { Gateway::AdyenPaymentEncrypted.create!(name: "Adyen") }
+
+        before do
+          controller.stub(current_order: order)
+
+          Gateway::AdyenPaymentEncrypted.stub find: gateway
+          gateway.stub authorise3d: double("Response", success?: true, psp_reference: 1)
+          gateway.stub_chain :provider, list_recurring_details: double("RecurringDetails", details: [])
+        end
+
+        it "redirects user if no recurring detail is returned" do
+          spree_get :authorise3d, params, { adyen_gateway_name: gateway.class.name, adyen_gateway_id: gateway.id }
+          expect(response).to redirect_to redirect_to spree.checkout_state_path(order.state)
+        end
+      end
+
+      context "reaching Adyen API", external: true do
+        let(:params) do
+          { MD: test_credentials["controller_md"], PaRes: test_credentials["controller_pa_response"] }
+        end
+
+        let!(:gateway) do
+          Gateway::AdyenPaymentEncrypted.create!(
+            name: "Adyen",
+            preferred_api_username: test_credentials["api_username"],
+            preferred_api_password: test_credentials["api_password"],
+            preferred_merchant_account: test_credentials["merchant_account"]
+          )
+        end
+
+        before do
+          order.user_id = 1
+          controller.stub(current_order: order)
+
+          ActionController::TestRequest.any_instance.stub(:ip).and_return("127.0.0.1")
+          ActionController::TestRequest.any_instance.stub_chain(:headers, env: env)
+        end
+
+        it "redirects user to confirm step" do
+          VCR.use_cassette("3D-Secure-authorise-redirect-controller") do
+            spree_get :authorise3d, params, { adyen_gateway_name: gateway.class.name, adyen_gateway_id: gateway.id }
+            expect(response).to redirect_to redirect_to spree.checkout_state_path("confirm")
+          end
+        end
+
+        it "set up payment" do
+          VCR.use_cassette("3D-Secure-authorise-redirect-controller") do
+            expect {
+              spree_get :authorise3d, params, { adyen_gateway_name: gateway.class.name, adyen_gateway_id: gateway.id }
+            }.to change { Payment.count }.by(1)
+          end
+        end
+
+        it "set up credit card with recurring details" do
+          VCR.use_cassette("3D-Secure-authorise-redirect-controller") do
+            expect {
+              spree_get :authorise3d, params, { adyen_gateway_name: gateway.class.name, adyen_gateway_id: gateway.id }
+            }.to change { CreditCard.count }.by(1)
+
+            expect(CreditCard.last.gateway_customer_profile_id).to be_present
+          end
+        end
+      end
     end
-
-    it "redirects to order complete page" do
-      spree_get :confirm, params
-      expect(response).to redirect_to spree.order_path(order, :token => order.token)
-    end
-
-    pending "test check signature filter"
-    pending "grab payment method by parameter (possibly merchantReturnData passed via session payment params)"
   end
 end
