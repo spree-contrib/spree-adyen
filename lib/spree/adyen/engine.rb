@@ -16,6 +16,11 @@ module Spree
           adyen.encrypt.js
         ]
       end
+
+      config.after_initialize do
+        Spree::Payment.send :attr_accessor, :request_env
+        Spree::PermittedAttributes.payment_attributes.push request_env: ['HTTP_USER_AGENT', 'HTTP_ACCEPT']
+      end
     end
   end
 end
