@@ -19,6 +19,12 @@ module Spree
         provider_class
       end
 
+      # NOTE Override this with your custom logic for scenarios where you don't
+      # want to redirect customer to 3D Secure auth
+      def require_3d_secure?(payment)
+        true
+      end
+
       def capture(amount, response_code, gateway_options = {})
         value = { :currency => Config.currency, :value => amount }
         response = provider.capture_payment(response_code, value)
@@ -93,6 +99,20 @@ module Spree
         provider.authorise3d_payment(md, pa_response, ip, browser_info)
       end
 
+      def build_authorise_details(payment)
+        if payment.request_env.is_a?(Hash) && require_3d_secure?(payment)
+          {
+            browser_info: {
+              accept_header: payment.request_env['HTTP_ACCEPT'],
+              user_agent: payment.request_env['HTTP_USER_AGENT']
+            },
+            recurring: true
+          }
+        else
+          { recurring: true }
+        end
+      end
+
       private
         def authorize_on_card(amount, source, gateway_options, card)
           reference = gateway_options[:order_id]
@@ -139,18 +159,7 @@ module Spree
                         :statement => "Order # #{payment.order.number}" }
 
             amount = { :currency => Config.currency, :value => 100 }
-
-            options = if payment.respond_to?(:request_env) && payment.request_env.is_a?(Hash)
-                        {
-                          browser_info: {
-                            accept_header: payment.request_env['HTTP_ACCEPT'],
-                            user_agent: payment.request_env['HTTP_USER_AGENT']
-                          },
-                          recurring: true
-                        }
-                      else
-                        { recurring: true }
-                      end
+            options = build_authorise_details payment
 
             response = provider.authorise_payment payment.order.number, amount, shopper, card, options
 

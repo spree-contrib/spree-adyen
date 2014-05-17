@@ -80,21 +80,40 @@ module Spree
       let(:payment) { create(:payment) }
 
       let(:details_response) do
-        double("List", details: [
-          { card: { expiry_date: Time.now, number: "1111" },
-            recurring_detail_reference: "123432423" }
-        ])
+        card = { card: { expiry_date: 1.year.from_now, number: "1111" }, recurring_detail_reference: "123432423" }
+        double("List", details: [card])
       end
 
       before do
         subject.stub_chain(:provider, authorise_payment: response)
         subject.stub_chain(:provider, list_recurring_details: details_response)
+        payment.source.gateway_customer_profile_id = nil
       end
 
       it "authorizes payment to set up recurring transactions" do
-        payment.source.gateway_customer_profile_id = nil
         subject.create_profile payment
         expect(payment.source.gateway_customer_profile_id).to eq details_response.details.last[:recurring_detail_reference]
+      end
+
+      it "builds authorise details options" do
+        expect(subject).to receive(:build_authorise_details)
+        subject.create_profile payment
+      end
+    end
+
+    context "builds authorise details" do
+      let(:payment) { double("Payment", request_env: {}) }
+
+      it "returns browser info when 3D secure is required" do
+        expect(subject.build_authorise_details payment).to have_key :browser_info
+      end
+
+      context "doesnt require 3d secure" do
+        before { subject.stub require_3d_secure?: false }
+
+        it "doesnt return browser info" do
+          expect(subject.build_authorise_details payment).to_not have_key :browser_info
+        end
       end
     end
 
