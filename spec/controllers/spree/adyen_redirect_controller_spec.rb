@@ -96,6 +96,10 @@ module Spree
 
           ActionController::TestRequest.any_instance.stub(:ip).and_return("127.0.0.1")
           ActionController::TestRequest.any_instance.stub_chain(:headers, env: env)
+
+          # Avoid failures like: (on Spree 2.2.x)
+          #   Mock received unexpected message :key? with ("HTTP_X_API_VERSION")
+          ActionController::TestRequest.any_instance.stub_chain(:headers, key?: false)
         end
 
         it "redirects user to confirm step" do
