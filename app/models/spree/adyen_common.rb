@@ -113,6 +113,10 @@ module Spree
         end
       end
 
+      def build_amount_on_profile_creation(payment)
+        { :currency => Config.currency, :value => payment.money.money.cents }
+      end
+
       private
         def authorize_on_card(amount, source, gateway_options, card)
           reference = gateway_options[:order_id]
@@ -158,7 +162,7 @@ module Spree
                         :ip => payment.order.last_ip_address,
                         :statement => "Order # #{payment.order.number}" }
 
-            amount = { :currency => Config.currency, :value => 100 }
+            amount = build_amount_on_profile_creation payment
             options = build_authorise_details payment
 
             response = provider.authorise_payment payment.order.number, amount, shopper, card, options
@@ -175,6 +179,12 @@ module Spree
                 last_digits: list.details.last[:card][:number],
                 gateway_customer_profile_id: list.details.last[:recurring_detail_reference]
               )
+
+              # Avoid this payment from being processed and so authorised again
+              # once the order transitions to complete state.
+              # See Spree::Order::Checkout for transition events
+              payment.started_processing!
+
             elsif response.enrolled_3d?
               raise Adyen::Enrolled3DError.new(response, payment.payment_method)
             else
