@@ -82,6 +82,17 @@ module Spree
         end
       end
 
+      def authorise3d(md, pa_response, ip, env)
+        browser_info = {
+          browser_info: {
+            accept_header: env['HTTP_ACCEPT'],
+            user_agent: env['HTTP_USER_AGENT']
+          }
+        }
+
+        provider.authorise3d_payment(md, pa_response, ip, browser_info)
+      end
+
       private
         def authorize_on_card(amount, source, gateway_options, card)
           reference = gateway_options[:order_id]
@@ -129,7 +140,19 @@ module Spree
 
             amount = { :currency => Config.currency, :value => 100 }
 
-            response = provider.authorise_payment payment.order.number, amount, shopper, card, true
+            options = if payment.respond_to?(:request_env) && payment.request_env.is_a?(Hash)
+                        {
+                          browser_info: {
+                            accept_header: payment.request_env['HTTP_ACCEPT'],
+                            user_agent: payment.request_env['HTTP_USER_AGENT']
+                          },
+                          recurring: true
+                        }
+                      else
+                        { recurring: true }
+                      end
+
+            response = provider.authorise_payment payment.order.number, amount, shopper, card, options
 
             if response.success?
               # Adyen doesn't give us the recurring reference (token) so we
@@ -143,6 +166,8 @@ module Spree
                 last_digits: list.details.last[:card][:number],
                 gateway_customer_profile_id: list.details.last[:recurring_detail_reference]
               )
+            elsif response.enrolled_3d?
+              raise Adyen::Enrolled3DError.new(response, payment.payment_method)
             else
               logger.error(Spree.t(:gateway_error))
               logger.error("  #{response.to_yaml}")

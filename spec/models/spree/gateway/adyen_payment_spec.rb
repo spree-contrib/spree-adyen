@@ -105,23 +105,13 @@ module Spree
         subject.preferred_api_password = test_credentials["api_password"]
       end
 
-      let(:credit_card) do
-        CreditCard.create! do |cc|
-          cc.name = "Washington Braga"
-          cc.number = "3700 0000 0000 002"
-          cc.month = "06"
-          cc.year = "2016"
-          cc.verification_value = "7373"
-        end
+      let(:order) do
+        user = stub_model(LegacyUser, email: "spree@example.com", id: rand(50))
+        stub_model(Order, id: 1, number: "R#{Time.now.to_i}-test", email: "spree@example.com", last_ip_address: "127.0.0.1", user: user)
       end
 
       context 'with an associated user' do
-        let(:order) do
-          user = stub_model(LegacyUser, email: "spree@example.com", id: 1)
-          stub_model(Order, id: 1, number: "R2342345435", last_ip_address: "127.0.0.1", user: user)
-        end
-
-        it "sets last recurring detail reference returned on payment source" do
+        pending "sets last recurring detail reference returned on payment source" do
           subject.save
 
           payment = Payment.create! do |p|
@@ -140,7 +130,7 @@ module Spree
           stub_model(Order, id: 1, number: "R2342345435", last_ip_address: "127.0.0.1")
         end
 
-        it "sets last recurring detail reference returned on payment source" do
+        pending "sets last recurring detail reference returned on payment source" do
           subject.save
 
           payment = Payment.create! do |p|
@@ -151,6 +141,65 @@ module Spree
           end
 
           expect(payment.source.gateway_customer_profile_id).to be_present
+        end
+      end
+
+      context "3-D enrolled credit card" do
+        let(:credit_card) do
+          CreditCard.create! do |cc|
+            cc.name = "Washington Braga"
+            cc.number = "4212 3456 7890 1237"
+            cc.month = "06"
+            cc.year = "2016"
+            cc.verification_value = "737"
+          end
+        end
+
+        let(:env) do
+          {
+            "HTTP_USER_AGENT" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:29.0) Gecko/20100101 Firefox/29.0",
+            "HTTP_ACCEPT"=> "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+          }
+        end
+
+        def set_up_payment
+          Payment.create! do |p|
+            p.order = order
+            p.amount = 1
+            p.source = credit_card
+            p.payment_method = subject
+            p.request_env = env
+          end
+        end
+
+        it "raises custom exception" do
+          subject.save
+
+          VCR.use_cassette("3D-Secure") do
+            expect {
+              set_up_payment
+            }.to raise_error Adyen::Enrolled3DError
+          end
+        end
+
+        it "doesn't persist new payments" do
+          subject.save
+
+          VCR.use_cassette("3D-Secure") do
+            payments = Payment.count
+            expect { set_up_payment }.to raise_error Adyen::Enrolled3DError
+            expect(payments).to eq Payment.count
+          end
+        end
+
+        it "authorises with payment 3d request" do
+          md = test_credentials["md"]
+          pa_response = test_credentials["pa_response"]
+          ip = "127.0.0.1"
+
+          VCR.use_cassette("3D-Secure-authorise") do
+            expect(subject.authorise3d(md, pa_response, ip, env)).to be_success
+          end
         end
       end
     end
