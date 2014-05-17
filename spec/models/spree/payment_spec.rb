@@ -6,10 +6,8 @@ module Spree
       let(:order) { create(:order) }
 
       let(:details_response) do
-        double("List", details: [
-          { card: { expiry_date: Time.now, number: "1111" },
-            recurring_detail_reference: "123432423" }
-        ])
+        card = { card: { expiry_date: 1.year.from_now, number: "1111" }, recurring_detail_reference: "123432423" }
+        double("List", details: [card])
       end
 
       let(:response) do
