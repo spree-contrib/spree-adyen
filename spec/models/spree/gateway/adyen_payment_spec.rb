@@ -99,6 +99,11 @@ module Spree
         expect(subject).to receive(:build_authorise_details)
         subject.create_profile payment
       end
+
+      it "set payment state to processing" do
+        subject.create_profile payment
+        expect(payment.state).to eq "processing"
+      end
     end
 
     context "builds authorise details" do
