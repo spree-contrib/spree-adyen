@@ -24,9 +24,9 @@ responses.
 To integrate with Adyen Payments you'll need to request API credentials by
 signing up at Adyen website https://www.adyen.com/.
 
-This extension provides two Payment Methods. In order to use the AdyenPayment
-method you'll need to make sure your account is enabled to use Adyen API Payments
-, needed to authoriza payments via their SOAP API.
+This extension provides three Payment Methods. In order to use AdyenPayment and
+AdyenPaymentEncrypted method you'll need to make sure your account is enabled to
+use Adyen API Payments, needed to authorize payments via their SOAP API.
 
 The other payment method, AdyenHPP, allows your store to authorize payments
 using Adyen Hosted Payments Page solution. In this case the customer will enter
@@ -46,6 +46,21 @@ persist on your application database.
 
 Please look into the adyen gem wiki https://github.com/wvanbergen/adyen/wiki and
 Adyen Integration Manual for further info https://www.adyen.com/developers/api/
+
+## Testing
+
+The extension contains some specs that will reach out Adyen API the first time
+you run them. Those are marked with the external tag and they need credentials
+so you'll have to set up a config/credentials.yml file. Theres's a helper
+`test_crendentials` available on the specs to call each key on that yaml file.
+Also it uses VCR to record the requests so you'll need to delete those files
+to do a new request.
+
+You can run external specs like this:
+
+```ruby
+bundle exec rspec spec --tag external
+```
 
 ## Contributing
 
