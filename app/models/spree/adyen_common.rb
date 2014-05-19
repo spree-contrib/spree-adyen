@@ -27,6 +27,11 @@ module Spree
         true
       end
 
+      # Receives a source object (e.g. CreditCard) and a shopper hash
+      def require_one_click_payment?(source, shopper)
+        false
+      end
+
       def capture(amount, response_code, gateway_options = {})
         value = { :currency => Config.currency, :value => amount }
         response = provider.capture_payment(response_code, value)
@@ -153,11 +158,7 @@ module Spree
                       :ip => gateway_options[:ip],
                       :statement => "Order # #{gateway_options[:order_id]}" }
 
-          if source.gateway_customer_profile_id.present?
-            response = provider.authorise_recurring_payment reference, amount, shopper, source.gateway_customer_profile_id
-          else
-            response = provider.authorise_payment reference, amount, shopper, card, options
-          end
+          response = decide_and_authorise reference, amount, shopper, source, card, options
 
           # Needed to make the response object talk nicely with Spree payment/processing api
           if response.success?
@@ -171,6 +172,19 @@ module Spree
           end
             
           response
+        end
+
+        def decide_and_authorise(reference, amount, shopper, source, card, options)
+          recurring_detail_reference = source.gateway_customer_profile_id
+          card_cvc = source.verification_value
+
+          if require_one_click_payment?(source, shopper) && recurring_detail_reference.present? && card_cvc.present?
+            provider.authorise_one_click_payment reference, amount, shopper, card_cvc, recurring_detail_reference
+          elsif source.gateway_customer_profile_id.present?
+            provider.authorise_recurring_payment reference, amount, shopper, source.gateway_customer_profile_id
+          else
+            provider.authorise_payment reference, amount, shopper, card, options
+          end
         end
 
         def create_profile_on_card(payment, card)

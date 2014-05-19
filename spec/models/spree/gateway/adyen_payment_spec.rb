@@ -143,6 +143,30 @@ module Spree
       end
     end
 
+    context "one click payment auth" do
+      before do
+        subject.stub require_one_click_payment?: true
+      end
+
+      let(:credit_card) do
+        hash = {
+          gateway_customer_profile_id: 1,
+          verification_value: 1,
+          name: "Spree",
+          number: 123,
+          month: 06,
+          year: 2016
+        }
+
+        double("CC", hash)
+      end
+
+      it "adds processing api calls to response object" do
+        expect(subject.provider).to receive(:authorise_one_click_payment).and_return response
+        result = subject.authorize(30000, credit_card)
+      end
+    end
+
     context "builds authorise details" do
       let(:payment) { double("Payment", request_env: {}) }
 
