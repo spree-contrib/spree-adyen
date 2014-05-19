@@ -115,6 +115,34 @@ module Spree
       end
     end
 
+    context "Adding recurring contract via $0 auth" do
+      let(:shopper_ip) { "127.0.0.1" }
+      let(:user) { double("User", id: 358, email: "spree@hq.com") }
+      let(:source) do
+        CreditCard.create! do |cc|
+          cc.name = "Spree Dev Check"
+          cc.verification_value = "737"
+          cc.month = "06"
+          cc.year = "2016"
+          cc.number = "5555444433331111"
+        end
+      end
+
+      before do
+        subject.preferred_merchant_account = test_credentials["merchant_account"]
+        subject.preferred_api_username = test_credentials["api_username"]
+        subject.preferred_api_password = test_credentials["api_password"]
+      end
+
+      it "brings last recurring contract info", external: true do
+        source.number = "5555444433331111"
+
+        VCR.use_cassette "add_contract" do
+          subject.add_contract source, user, shopper_ip
+        end
+      end
+    end
+
     context "builds authorise details" do
       let(:payment) { double("Payment", request_env: {}) }
 

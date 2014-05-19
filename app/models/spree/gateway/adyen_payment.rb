@@ -34,5 +34,15 @@ module Spree
 
       create_profile_on_card payment, card
     end
+
+    def add_contract(source, user, shopper_ip)
+      card = { :holder_name => source.name,
+               :number => source.number,
+               :cvc => source.verification_value,
+               :expiry_month => source.month,
+               :expiry_year => source.year }
+
+      set_up_contract source, card, user, shopper_ip
+    end
   end
 end

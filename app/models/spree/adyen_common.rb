@@ -2,6 +2,8 @@ module Spree
   module AdyenCommon
     extend ActiveSupport::Concern
 
+    class RecurringDetailsNotFoundError < StandardError; end
+
     included do
       preference :api_username, :string
       preference :api_password, :string
@@ -118,7 +120,24 @@ module Spree
       end
 
       private
-        def authorize_on_card(amount, source, gateway_options, card)
+        def set_up_contract(source, card, user, shopper_ip)
+          options = {
+            order_id: "User-#{user.id}",
+            customer_id: user.id,
+            email: user.email,
+            ip: shopper_ip,
+          }
+
+          response = authorize_on_card 0, source, options, card, { recurring: true }
+
+          if response.success?
+            fetch_and_update_contract source, options[:customer_id]
+          else
+            response.error
+          end
+        end
+
+        def authorize_on_card(amount, source, gateway_options, card, options = { recurring: false })
           reference = gateway_options[:order_id]
 
           amount = { :currency => Config.currency, :value => amount }
@@ -137,7 +156,7 @@ module Spree
           if source.gateway_customer_profile_id.present?
             response = provider.authorise_recurring_payment reference, amount, shopper, source.gateway_customer_profile_id
           else
-            response = provider.authorise_payment reference, amount, shopper, card
+            response = provider.authorise_payment reference, amount, shopper, card, options
           end
 
           # Needed to make the response object talk nicely with Spree payment/processing api
@@ -168,17 +187,7 @@ module Spree
             response = provider.authorise_payment payment.order.number, amount, shopper, card, options
 
             if response.success?
-              # Adyen doesn't give us the recurring reference (token) so we
-              # need to reach the api again to grab the token
-              list = provider.list_recurring_details(shopper[:reference])
-              payment.source.update_columns(
-                month: list.details.last[:card][:expiry_date].month,
-                year: list.details.last[:card][:expiry_date].year,
-                name: list.details.last[:card][:holder_name],
-                cc_type: list.details.last[:variant],
-                last_digits: list.details.last[:card][:number],
-                gateway_customer_profile_id: list.details.last[:recurring_detail_reference]
-              )
+              fetch_and_update_contract payment.source, shopper[:reference]
 
               # Avoid this payment from being processed and so authorised again
               # once the order transitions to complete state.
@@ -195,6 +204,25 @@ module Spree
 
             response
           end
+        end
+
+        def fetch_and_update_contract(source, shopper_reference)
+          # Adyen doesn't give us the recurring reference (token) so we
+          # need to reach the api again to grab the token
+          list = provider.list_recurring_details(shopper_reference)
+
+          unless list.details.present?
+            raise RecurringDetailsNotFoundError
+          end
+
+          source.update_columns(
+            month: list.details.last[:card][:expiry_date].month,
+            year: list.details.last[:card][:expiry_date].year,
+            name: list.details.last[:card][:holder_name],
+            cc_type: list.details.last[:variant],
+            last_digits: list.details.last[:card][:number],
+            gateway_customer_profile_id: list.details.last[:recurring_detail_reference]
+          )
         end
     end
 
