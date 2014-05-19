@@ -66,6 +66,11 @@ module Spree
             end
           end
 
+          # Avoid this payment from being processed and so authorised again
+          # once the order transitions to complete state.
+          # See Spree::Order::Checkout for transition events
+          payment.started_processing!
+
           # We want to avoid callbacks such as Payment#create_payment_profile on after_save
           payment.update_columns source_id: credit_card.id, source_type: credit_card.class.name
 
