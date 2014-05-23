@@ -62,6 +62,10 @@ You can run external specs like this:
 bundle exec rspec spec --tag external
 ```
 
+## Test Credit Card Info
+
+https://support.adyen.com/index.php?/Knowledgebase/Article/View/11/0/test-card-numbers
+
 ## Contributing
 
 1. Fork it

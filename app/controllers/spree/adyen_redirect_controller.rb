@@ -96,8 +96,13 @@ module Spree
     end
 
     private
+
+      def authorized?
+        params[:authResult] == "AUTHORISED"
+      end
+
       def check_signature
-        unless ::Adyen::Form.redirect_signature_check(params, payment_method.preferred_shared_secret)
+        unless ::Adyen::Form.redirect_signature_check(params, shared_secret)
           raise "Payment Method not found."
         end
       end
@@ -108,8 +113,9 @@ module Spree
         @payment_method ||= Gateway::AdyenHPP.last # find(params[:merchantReturnData])
       end
 
-      def authorized?
-        params[:authResult] == "AUTHORISED"
+      def shared_secret
+        ENV['ADYEN_SHARED_SECRET'] || payment_method.preferred_shared_secret
       end
+
   end
 end

@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'pg'
   spec.add_development_dependency "rake"
   spec.add_development_dependency "rspec-rails"
+  spec.add_development_dependency 'sass-rails', '~> 4.0.2'
   spec.add_development_dependency 'sqlite3'
 
   spec.add_runtime_dependency "adyen", "~> 1.4.0"

@@ -9,14 +9,18 @@ module Spree
       preference :api_password, :string
       preference :merchant_account, :string
 
+      def merchant_account
+        ENV['ADYEN_MERCHANT_ACCOUNT'] || preferred_merchant_account
+      end
+
       def provider_class
         ::Adyen::API
       end
 
       def provider
-        ::Adyen.configuration.api_username = preferred_api_username
-        ::Adyen.configuration.api_password = preferred_api_password
-        ::Adyen.configuration.default_api_params[:merchant_account] = preferred_merchant_account
+        ::Adyen.configuration.api_username = (ENV['ADYEN_API_USERNAME'] || preferred_api_username)
+        ::Adyen.configuration.api_password = (ENV['ADYEN_API_PASSWORD'] || preferred_api_password)
+        ::Adyen.configuration.default_api_params[:merchant_account] = merchant_account
 
         provider_class
       end
@@ -170,7 +174,7 @@ module Spree
               "#{result_code} - #{refusal_reason}"
             end
           end
-            
+
           response
         end
 

@@ -10,9 +10,9 @@
         :session_validity => 10.minutes.from_now,
         :recurring => false,
         :merchant_reference => "#{@order.number}",
-        :merchant_account => payment_method.preferred_merchant_account,
-        :skin_code => payment_method.preferred_skin_code,
-        :shared_secret => payment_method.preferred_shared_secret,
+        :merchant_account => payment_method.merchant_account,
+        :skin_code => payment_method.skin_code,
+        :shared_secret => payment_method.shared_secret,
         :payment_amount => (@order.total.to_f * 100).to_int
   }
 %>

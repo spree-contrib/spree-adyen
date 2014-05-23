@@ -35,6 +35,14 @@ module Spree
       "adyen"
     end
 
+    def shared_secret
+      ENV['ADYEN_SHARED_SECRET'] || preferred_skin_code
+    end
+
+    def skin_code
+      ENV['ADYEN_SKIN_CODE'] || preferred_skin_code
+    end
+
     # According to Spree Processing class API the response object should respond
     # to an authorization method which return value should be assigned to payment
     # response_code
@@ -51,5 +59,6 @@ module Spree
       end
       response
     end
+
   end
 end
