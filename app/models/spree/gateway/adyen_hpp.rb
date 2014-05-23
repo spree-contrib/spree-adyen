@@ -36,7 +36,7 @@ module Spree
     end
 
     def shared_secret
-      ENV['ADYEN_SHARED_SECRET'] || preferred_skin_code
+      ENV['ADYEN_SHARED_SECRET'] || preferred_shared_secret
     end
 
     def skin_code
