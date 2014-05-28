@@ -216,7 +216,7 @@ module Spree
               # See Spree::Order::Checkout for transition events
               payment.started_processing!
 
-            elsif response.enrolled_3d?
+            elsif response.respond_to?(:enrolled_3d?) && response.enrolled_3d?
               raise Adyen::Enrolled3DError.new(response, payment.payment_method)
             else
               logger.error(Spree.t(:gateway_error))
