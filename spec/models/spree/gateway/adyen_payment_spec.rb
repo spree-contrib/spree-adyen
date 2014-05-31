@@ -21,10 +21,11 @@ module Spree
 
     context "ensure adyen validations goes fine" do
       let(:options) do
-        { :order_id => 17,
-          :email => "surf@uk.com",
-          :customer_id => 1,
-          :ip => "127.0.0.1" }
+        { order_id: 17,
+          email: "surf@uk.com",
+          customer_id: 1,
+          ip: "127.0.0.1",
+          currency: 'USD' }
       end
 
       before do

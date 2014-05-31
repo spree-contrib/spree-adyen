@@ -37,7 +37,7 @@ module Spree
       end
 
       def capture(amount, response_code, gateway_options = {})
-        value = { :currency => Config.currency, :value => amount }
+        value = { currency: gateway_options[:currency], value: amount }
         response = provider.capture_payment(response_code, value)
 
         if response.success?
@@ -72,7 +72,7 @@ module Spree
       end
 
       def credit(credit_cents, source, response_code, gateway_options)
-        amount = { :currency => Config.currency, :value => credit_cents }
+        amount = { currency: gateway_options[:currency], value: amount }
         response = provider.refund_payment response_code, amount
 
         if response.success?
@@ -125,10 +125,11 @@ module Spree
       end
 
       def build_amount_on_profile_creation(payment)
-        { :currency => Config.currency, :value => payment.money.money.cents }
+        { currency: payment.currency, value: payment.money.money.cents }
       end
 
       private
+
         def set_up_contract(source, card, user, shopper_ip)
           options = {
             order_id: "User-#{user.id}",
@@ -149,7 +150,7 @@ module Spree
         def authorize_on_card(amount, source, gateway_options, card, options = { recurring: false })
           reference = gateway_options[:order_id]
 
-          amount = { :currency => Config.currency, :value => amount }
+          amount = { currency: gateway_options[:currency], value: amount }
 
           shopper_reference = if gateway_options[:customer_id].present?
                                 gateway_options[:customer_id]
