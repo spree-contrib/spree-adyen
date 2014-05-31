@@ -72,15 +72,14 @@ module Spree
       end
 
       def credit(credit_cents, source, response_code, gateway_options)
-        amount = { currency: gateway_options[:currency], value: amount }
+        amount = { currency: gateway_options[:currency], value: credit_cents }
         response = provider.refund_payment response_code, amount
 
         if response.success?
           def response.authorization; psp_reference; end
         else
-          # TODO confirm the error response will always have these two methods
           def response.to_s
-            "#{result_code} - #{refusal_reason}"
+            refusal_reason
           end
         end
 
