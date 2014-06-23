@@ -17,7 +17,7 @@ And then execute:
 Copy the adyen notification migration. You'll need it to save all notifications
 responses.
 
-    $ rake railties:install:migration
+    $ rake railties:install:migrations
 
 ## Usage
 
