@@ -25,7 +25,7 @@ module Spree
 
       if order.complete?
         flash.notice = Spree.t(:order_processed_successfully)
-        redirect_to order_path(order, :token => order.guest_token)
+        redirect_to order_path(order, :token => order.token)
       else
         redirect_to checkout_state_path(order.state)
       end

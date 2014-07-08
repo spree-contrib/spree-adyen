@@ -40,7 +40,7 @@ module Spree
 
       it "redirects to order complete page" do
         spree_get :confirm, params
-        expect(response).to redirect_to spree.order_path(order, :token => order.guest_token)
+        expect(response).to redirect_to spree.order_path(order, :token => order.token)
       end
 
       pending "test check signature filter"
