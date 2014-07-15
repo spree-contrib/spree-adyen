@@ -2,7 +2,7 @@ require 'spec_helper'
 
 module Spree
   describe AdyenRedirectController do
-    let(:order) { create(:order_with_line_items, state: "payment") } 
+    let(:order) { create(:order_with_line_items, state: "payment") }
 
     context "Adyen HPP Gateway" do
       def params
@@ -40,7 +40,7 @@ module Spree
 
       it "redirects to order complete page" do
         spree_get :confirm, params
-        expect(response).to redirect_to spree.order_path(order, :token => order.token)
+        expect(response).to redirect_to spree.order_path(order, :token => order.guest_token)
       end
 
       pending "test check signature filter"
