@@ -103,7 +103,7 @@ module Spree
 
       context 'without an associated user' do
         it "sets last recurring detail reference returned on payment source" do
-          payment.order = stub_model(Order, id: 1, number: "R2342345435", last_ip_address: "127.0.0.1")
+          payment.order = mock_model(Order, id: 1, number: "R2342345435", last_ip_address: "127.0.0.1")
           subject.create_profile payment
 
           expect(payment.source.gateway_customer_profile_id).to be_present

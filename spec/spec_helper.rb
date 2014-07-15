@@ -4,6 +4,7 @@ ENV["RAILS_ENV"] = "test"
 require File.expand_path("../dummy/config/environment.rb",  __FILE__)
 require 'rspec/rails'
 require 'ffaker'
+require 'rspec/active_model/mocks'
 
 # Requires supporting ruby files with custom matchers and macros, etc,
 # in spec/support/ and its subdirectories.
@@ -25,8 +26,8 @@ end
 
 RSpec.configure do |config|
   config.color = true
+  config.infer_spec_type_from_file_location!
   config.mock_with :rspec
-
   config.use_transactional_fixtures = true
 
   config.include Spree::TestingSupport::ControllerRequests
