@@ -101,6 +101,11 @@ module Spree
         subject.create_profile payment
       end
 
+      it "set payment state to processing" do
+        subject.create_profile payment
+        expect(payment.state).to eq "processing"
+      end
+
       context 'without an associated user' do
         it "sets last recurring detail reference returned on payment source" do
           payment.order = mock_model(Order, id: 1, number: "R2342345435", last_ip_address: "127.0.0.1")

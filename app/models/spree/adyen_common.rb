@@ -210,6 +210,12 @@ module Spree
 
             if response.success?
               fetch_and_update_contract payment.source, shopper[:reference]
+
+              # Avoid this payment from being processed and so authorised again
+              # once the order transitions to complete state.
+              # See Spree::Order::Checkout for transition events
+              payment.started_processing!
+
             elsif response.respond_to?(:enrolled_3d?) && response.enrolled_3d?
               raise Adyen::Enrolled3DError.new(response, payment.payment_method)
             else

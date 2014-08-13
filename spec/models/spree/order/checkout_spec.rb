@@ -7,9 +7,9 @@ module Spree
       let(:order) { OrderWalkthrough.up_to(:delivery) }
       let(:credit_card) { create(:credit_card) }
 
-      let(:gateway) { Gateway::AdyenPaymentEncrypted.create!(name: "Adyen", environment: 'test') }
+      let(:gateway) { Gateway::AdyenPaymentEncrypted.create!(name: "Adyen") }
 
-      let(:response) { double("Response", success?: true, psp_reference: '123', result_code: 'Y') }
+      let(:response) { double("Response", success?: true) }
 
       let(:details) do
         double("Details", details: [
@@ -20,7 +20,6 @@ module Spree
       before do
         Gateway::AdyenPaymentEncrypted.any_instance.stub_chain :provider, authorise_payment: response
         Gateway::AdyenPaymentEncrypted.any_instance.stub_chain :provider, list_recurring_details: details
-        Gateway::AdyenPaymentEncrypted.any_instance.stub_chain :provider, authorise_recurring_payment: response
       end
 
       it "transitions to complete just fine" do
