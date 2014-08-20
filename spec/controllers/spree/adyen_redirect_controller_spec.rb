@@ -18,9 +18,9 @@ module Spree
       let(:payment_method) { Gateway::AdyenHPP.create(name: "Adyen") }
 
       before do
-        controller.stub(current_order: order)
-        controller.stub(:check_signature)
-        controller.stub(payment_method: payment_method)
+        expect(controller).to receive(:current_order).and_return order
+        expect(controller).to receive(:check_signature)
+        expect(controller).to receive(:payment_method).and_return payment_method
       end
 
       it "create payment" do
@@ -63,10 +63,10 @@ module Spree
         let!(:gateway) { Gateway::AdyenPaymentEncrypted.create!(name: "Adyen") }
 
         before do
-          controller.stub(current_order: order)
+          expect(controller).to receive(:current_order).and_return order
 
-          Gateway::AdyenPaymentEncrypted.stub find: gateway
-          gateway.stub authorise3d: double("Response", success?: true, psp_reference: 1)
+          expect(Gateway::AdyenPaymentEncrypted).to receive(:find).and_return gateway
+          expect(gateway).to receive(:authorise3d).and_return double("Response", success?: true, psp_reference: 1)
           gateway.stub_chain :provider, list_recurring_details: double("RecurringDetails", details: [])
         end
 

@@ -86,8 +86,8 @@ module Spree
       end
 
       before do
-        subject.stub_chain(:provider, authorise_payment: response)
-        subject.stub_chain(:provider, list_recurring_details: details_response)
+        expect(subject.provider).to receive(:authorise_payment).and_return response
+        expect(subject.provider).to receive(:list_recurring_details).and_return details_response
         payment.source.gateway_customer_profile_id = nil
       end
 
@@ -108,7 +108,7 @@ module Spree
 
       context 'without an associated user' do
         it "sets last recurring detail reference returned on payment source" do
-          payment.order = mock_model(Order, id: 1, number: "R2342345435", last_ip_address: "127.0.0.1")
+          payment.order = Order.create number: "R2342345435", last_ip_address: "127.0.0.1"
           subject.create_profile payment
 
           expect(payment.source.gateway_customer_profile_id).to be_present
@@ -194,6 +194,32 @@ module Spree
       let(:order) do
         user = stub_model(LegacyUser, email: "spree@example.com", id: rand(50))
         stub_model(Order, id: 1, number: "R#{Time.now.to_i}-test", email: "spree@example.com", last_ip_address: "127.0.0.1", user: user)
+      end
+      
+      it "sets profiles" do
+        credit_card = CreditCard.new do |cc|
+          cc.name = "Washington Braga"
+          cc.number = "5555444433331111"
+          cc.month = "06"
+          cc.year = "2016"
+          cc.verification_value = "737"
+        end
+
+        payment = Payment.new do |p|
+          p.order = order
+          p.amount = 1
+          p.source = credit_card
+          p.payment_method = subject
+          p.request_env = {}
+        end
+
+        order.user_id = 33242
+
+        VCR.use_cassette("profiles/set") do
+          subject.save
+          payment.save!
+          expect(credit_card.gateway_customer_profile_id).not_to be_empty
+        end
       end
 
       context "3-D enrolled credit card" do
