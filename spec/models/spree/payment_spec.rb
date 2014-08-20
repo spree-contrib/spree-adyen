@@ -15,8 +15,8 @@ module Spree
       end
 
       before do
-        payment_method.stub_chain(:provider, authorise_payment: response)
-        payment_method.stub_chain(:provider, list_recurring_details: details_response)
+        expect(payment_method.provider).to receive(:authorise_payment).and_return(response)
+        expect(payment_method.provider).to receive(:list_recurring_details).and_return(details_response)
       end
 
       specify do
@@ -62,7 +62,7 @@ module Spree
           p.payment_method = payment_method
         end
 
-        payment_method.stub_chain(:provider, cancel_payment: response)
+        expect(payment_method.provider).to receive(:cancel_payment).and_return(response)
         expect(payment.void_transaction!).to be
       end
 
@@ -74,7 +74,7 @@ module Spree
           p.payment_method = payment_method
         end
 
-        payment_method.stub_chain(:provider, refund_payment: response)
+        expect(payment_method.provider).to receive(:refund_payment).and_return(response)
         expect(payment.credit!).to be_a Spree::Payment
       end
     end
