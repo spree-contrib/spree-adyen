@@ -13,13 +13,13 @@ module Spree
 
       let(:details) do
         double("Details", details: [
-          { card: { expiry_date: 1.year.from_now }, recurring_detail_reference: 123 }
+          { card: { number: "1111", expiry_date: 1.year.from_now }, recurring_detail_reference: 123 }
         ])
       end
 
       before do
-        Gateway::AdyenPaymentEncrypted.any_instance.stub_chain :provider, authorise_payment: response
-        Gateway::AdyenPaymentEncrypted.any_instance.stub_chain :provider, list_recurring_details: details
+        expect(gateway.provider).to receive(:authorise_payment).and_return(response)
+        expect(gateway.provider).to receive(:list_recurring_details).and_return(details)
       end
 
       it "transitions to complete just fine" do

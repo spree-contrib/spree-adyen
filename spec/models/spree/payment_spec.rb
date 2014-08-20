@@ -2,7 +2,7 @@ require 'spec_helper'
 
 module Spree
   describe Payment do
-    shared_examples "creates profile on payment creation" do
+    shared_examples "set up a profile on payment creation" do
       let(:order) { create(:order) }
 
       let(:details_response) do
@@ -11,7 +11,12 @@ module Spree
       end
 
       let(:response) do
-        double("Response", psp_reference: "psp", result_code: "accepted", success?: true)
+        double("Response",
+          psp_reference: "psp",
+          result_code: "accepted",
+          success?: true,
+          additional_data: { "cardSummary" => "1111" }
+        )
       end
 
       before do
@@ -52,7 +57,7 @@ module Spree
         end
       end
 
-      include_examples "creates profile on payment creation"
+      include_examples "set up a profile on payment creation"
 
       it "voids payments" do
         payment = Payment.create! do |p|
@@ -97,7 +102,7 @@ module Spree
         end
       end
 
-      include_examples "creates profile on payment creation"
+      include_examples "set up a profile on payment creation"
     end
   end
 end
