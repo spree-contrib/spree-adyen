@@ -218,14 +218,17 @@ module Spree
             response = provider.authorise_payment payment.order.number, amount, shopper, card, options
 
             if response.success?
-              last_digits = response.additional_data["cardSummary"]
-              if last_digits.blank? && payment_profiles_supported?
-                note = "Payment was authorized but could not fetch last digits.
-                        Please request last digits to be sent back to support payment profiles"
-                raise Adyen::MissingCardSummaryError, note
+              if payment.source.last_digits.blank?
+                last_digits = response.additional_data["cardSummary"]
+                if last_digits.blank? && payment_profiles_supported?
+                  note = "Payment was authorized but could not fetch last digits.
+                          Please request last digits to be sent back to support payment profiles"
+                  raise Adyen::MissingCardSummaryError, note
+                end
+
+                payment.source.last_digits = last_digits
               end
 
-              payment.source.last_digits = last_digits
               fetch_and_update_contract payment.source, shopper[:reference]
 
               # Avoid this payment from being processed and so authorised again
