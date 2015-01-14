@@ -4,6 +4,7 @@ module Spree
 
     class RecurringDetailsNotFoundError < StandardError; end
     class MissingCardSummaryError < StandardError; end
+    class MissingAliasError < StandardError; end
 
     included do
       preference :api_username, :string
@@ -28,7 +29,7 @@ module Spree
 
       # NOTE Override this with your custom logic for scenarios where you don't
       # want to redirect customer to 3D Secure auth
-      def require_3d_secure?(payment)
+      def require_3d_secure?(amount, source, gateway_options)
         true
       end
 
@@ -42,7 +43,7 @@ module Spree
         response = provider.capture_payment(response_code, value)
 
         if response.success?
-          def response.authorization; psp_reference; end
+          def response.authorization; nil; end
           def response.avs_result; {}; end
           def response.cvv_result; {}; end
         else
@@ -62,7 +63,7 @@ module Spree
         response = provider.cancel_payment(response_code)
 
         if response.success?
-          def response.authorization; psp_reference; end
+          def response.authorization; nil; end
         else
           # TODO confirm the error response will always have these two methods
           def response.to_s
@@ -77,7 +78,7 @@ module Spree
         response = provider.refund_payment response_code, amount
 
         if response.success?
-          def response.authorization; psp_reference; end
+          def response.authorization; nil; end
         else
           def response.to_s
             refusal_reason
@@ -110,12 +111,12 @@ module Spree
         provider.authorise3d_payment(md, pa_response, ip, browser_info)
       end
 
-      def build_authorise_details(payment)
-        if payment.request_env.is_a?(Hash) && require_3d_secure?(payment)
+      def build_authorise_options(amount, source, gateway_options)
+        if gateway_options[:request_env].is_a?(Hash) && require_3d_secure?(amount, source, gateway_options)
           {
             browser_info: {
-              accept_header: payment.request_env['HTTP_ACCEPT'],
-              user_agent: payment.request_env['HTTP_USER_AGENT']
+              accept_header: gateway_options[:request_env]['HTTP_ACCEPT'],
+              user_agent: gateway_options[:request_env]['HTTP_USER_AGENT']
             },
             recurring: true
           }
@@ -158,6 +159,8 @@ module Spree
         def authorize_on_card(amount, source, gateway_options, card, options = { recurring: false })
           reference = gateway_options[:order_id]
 
+          options = build_authorise_options(amount, source, gateway_options)
+
           amount = { currency: gateway_options[:currency], value: amount }
 
           shopper_reference = if gateway_options[:customer_id].present?
@@ -172,6 +175,8 @@ module Spree
                       :statement => "Order # #{gateway_options[:order_id]}" }
 
           response = decide_and_authorise reference, amount, shopper, source, card, options
+
+          raise Adyen::Enrolled3DError.new(response, self, gateway_options) if response.respond_to?(:enrolled_3d?) && response.enrolled_3d?
 
           # Needed to make the response object talk nicely with Spree payment/processing api
           if response.success?
@@ -197,8 +202,8 @@ module Spree
 
           if require_one_click_payment?(source, shopper) && recurring_detail_reference.present?
             provider.authorise_one_click_payment reference, amount, shopper, card_cvc, recurring_detail_reference
-          elsif source.gateway_customer_profile_id.present?
-            provider.authorise_recurring_payment reference, amount, shopper, source.gateway_customer_profile_id
+          elsif recurring_detail_reference.present?
+            provider.authorise_recurring_payment reference, amount, shopper, recurring_detail_reference
           else
             provider.authorise_payment reference, amount, shopper, card, options
           end
@@ -212,12 +217,18 @@ module Spree
                         :ip => payment.order.last_ip_address,
                         :statement => "Order # #{payment.order.number}" }
 
-            amount = build_amount_on_profile_creation payment
-            options = build_authorise_details payment
+            # Auth for 0. Adyen will automatically update this to 1 if 0 not supported by Issuer
+            amount = 0
 
-            response = provider.authorise_payment payment.order.number, amount, shopper, card, options
+            # Still build options as payment may requre 3D Secure
+            options = build_authorise_details payment.gateway_options
+
+            response = provider.authorise_payment payment.gateway_options[:order_id], amount, shopper, card, options
 
             if response.success?
+
+              store_profile_from_alias(payment, response)
+
               if payment.source.last_digits.blank?
                 last_digits = response.additional_data["cardSummary"]
                 if last_digits.blank? && payment_profiles_supported?
@@ -225,16 +236,8 @@ module Spree
                           Please request last digits to be sent back to support payment profiles"
                   raise Adyen::MissingCardSummaryError, note
                 end
-
                 payment.source.last_digits = last_digits
               end
-
-              fetch_and_update_contract payment.source, shopper[:reference]
-
-              # Avoid this payment from being processed and so authorised again
-              # once the order transitions to complete state.
-              # See Spree::Order::Checkout for transition events
-              payment.started_processing!
 
             elsif response.respond_to?(:enrolled_3d?) && response.enrolled_3d?
               raise Adyen::Enrolled3DError.new(response, payment.payment_method)
@@ -246,6 +249,16 @@ module Spree
 
             response
           end
+        end
+
+        def store_profile_from_alias(payment, response)
+          customer_profile_id = response.additional_data["alias"]
+          if customer_profile_id.blank? && payment_profiles_supported?
+            note = "Payment was authorized but could not fetch alias (customer_profile_id).
+                    Please request alias to be sent back to support payment profiles"
+            raise Adyen::MissingAliasError, note
+          end
+          payment.source.update_attribute :gateway_customer_profile_id, response.additional_data["alias"]
         end
 
         def fetch_and_update_contract(source, shopper_reference)
@@ -264,6 +277,7 @@ module Spree
             gateway_customer_profile_id: card[:recurring_detail_reference]
           )
         end
+
     end
 
     module ClassMethods

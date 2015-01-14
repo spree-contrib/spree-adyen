@@ -7,7 +7,11 @@ module Spree
     preference :shared_secret, :string
 
     def source_required?
-      false
+      true
+    end
+
+    def payment_source_class
+      Spree::AlternativePaymentSource
     end
 
     def auto_capture?
@@ -18,7 +22,7 @@ module Spree
     # Adyen Hosted Payment Pages where we wouldn't keep # the credit card object
     # as that entered outside of the store forms
     def actions
-      %w{capture void}
+      %w{capture void authorize}
     end
 
     # Indicates whether its possible to void the payment.
@@ -43,6 +47,10 @@ module Spree
       ENV['ADYEN_SKIN_CODE'] || preferred_skin_code
     end
 
+    def authorize(amount, source, gateway_options = {})
+      raise Adyen::HPPRedirectError.new(source)
+    end
+
     # According to Spree Processing class API the response object should respond
     # to an authorization method which return value should be assigned to payment
     # response_code
@@ -50,7 +58,7 @@ module Spree
       response = provider.cancel_payment(response_code)
 
       if response.success?
-        def response.authorization; psp_reference; end
+        def response.authorization; nil; end
       else
         # TODO confirm the error response will always have these two methods
         def response.to_s
