@@ -1,7 +1,12 @@
 # Configure Rails Environment
 ENV["RAILS_ENV"] = "test"
 
-require File.expand_path("../dummy/config/environment.rb",  __FILE__)
+begin
+  require File.expand_path("../dummy/config/environment.rb",  __FILE__)
+rescue LoadError
+  puts "Could not load dummy application. Please ensure you have run `bundle exec rake test_app`"
+end
+
 require 'rspec/rails'
 require 'ffaker'
 require 'rspec/active_model/mocks'
@@ -30,7 +35,7 @@ RSpec.configure do |config|
   config.mock_with :rspec
   config.use_transactional_fixtures = true
 
-  config.include Spree::TestingSupport::ControllerRequests
+  config.include Spree::TestingSupport::ControllerRequests, type: :controller
   config.include FactoryGirl::Syntax::Methods
   config.include Spree::TestingSupport::UrlHelpers
 

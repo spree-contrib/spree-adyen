@@ -56,6 +56,12 @@ so you'll have to set up a config/credentials.yml file. Theres's a helper
 Also it uses VCR to record the requests so you'll need to delete those files
 to do a new request.
 
+Required to run specs: create a dummy Rails app as testing environment:
+
+```ruby
+bundle exec rake test_app
+```
+
 You can run external specs like this:
 
 ```ruby
