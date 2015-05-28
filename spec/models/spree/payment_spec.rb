@@ -40,7 +40,6 @@ module Spree
       let(:payment_method) do
         Gateway::AdyenPayment.create(
           name: "Adyen",
-          environment: "test",
           preferred_merchant_account: "Test",
           preferred_api_username: "Test",
           preferred_api_password: "Test"
@@ -88,7 +87,6 @@ module Spree
       let(:payment_method) do
         Gateway::AdyenPaymentEncrypted.create(
           name: "Adyen",
-          environment: "test",
           preferred_merchant_account: "Test",
           preferred_api_username: "Test",
           preferred_api_password: "Test",
