@@ -4,7 +4,7 @@ require 'spree/testing_support/order_walkthrough'
 module Spree
   describe Order do
     context 'with an associated user' do
-      let(:order) { OrderWalkthrough.up_to(:delivery) }
+      let(:order) { OrderWalkthrough.up_to(:payment) }
       let(:credit_card) { create(:credit_card) }
 
       let(:gateway) { Gateway::AdyenPaymentEncrypted.create!(name: "Adyen") }
@@ -26,14 +26,18 @@ module Spree
         expect(order.state).to eq "payment"
 
         payment = order.payments.create! do |p|
-          p.amount = 1
+          p.amount = order.total
           p.source = credit_card
           p.payment_method = gateway
         end
+        payment.complete
+        order.payment_total = payment.amount
+
 
         order.next!
-        order.next!
+        expect(order.state).to eq "confirm"
 
+        order.next!
         expect(order.state).to eq "complete"
       end
     end
