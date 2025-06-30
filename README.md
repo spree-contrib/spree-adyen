@@ -1,3 +1,9 @@
+> [!WARNING]  
+> This extension is old and deprecated. 
+>
+> Please go to [Spree Adyen integration page](https://spreecommerce.org/docs/integrations/payments/adyen) to install the new Spree-Adyen plugin.
+
+
 # Spree Adyen Integration
 
 Easily integrates Adyen payments into a Spree store. It works as a wrapper
